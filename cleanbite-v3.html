@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CleanBite</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+:root {
+  --bg: #f7f5f0;
+  --white: #ffffff;
+  --green: #1a6b3a;
+  --green-light: #e8f5ee;
+  --green-bright: #2dbe6c;
+  --text: #111;
+  --muted: #888;
+  --border: #e4e0d8;
+  --red: #d63031;
+  --amber: #e67e22;
+  --radius: 16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { height:100%; background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; }
+
+/* HEADER */
+header {
+  padding: 18px 20px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+}
+.logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1.3rem; color:var(--text); letter-spacing:-.02em; }
+.logo span { color:var(--green); }
+.step-indicator { display:flex; align-items:center; gap:6px; }
+.step-dot { width:8px; height:8px; border-radius:50%; background:var(--border); transition:background .3s; }
+.step-dot.active { background:var(--green); }
+.step-dot.done { background:var(--green-bright); }
+
+/* CONTENT */
+.content { padding: 28px 20px; max-width: 500px; margin: 0 auto; }
+
+/* SCREENS */
+.screen { display:none; animation: fadeIn .3s ease; }
+.screen.active { display:block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* STEP LABEL */
+.step-label { font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--green); font-weight:600; margin-bottom:8px; }
+.screen-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1.8rem; line-height:1.1; letter-spacing:-.02em; margin-bottom:6px; }
+.screen-sub { color:var(--muted); font-size:.9rem; margin-bottom:28px; }
+
+/* BIG SCAN BUTTON */
+.scan-btn {
+  width:100%; padding:22px;
+  background:var(--green); color:white;
+  border:none; border-radius:var(--radius);
+  font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:12px;
+  transition: transform .15s, background .2s;
+  margin-bottom:16px;
+}
+.scan-btn:active { transform:scale(.97); }
+.scan-btn svg { width:24px; height:24px; stroke:white; stroke-width:2; fill:none; }
+
+/* DIVIDER */
+.divider { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.divider span { font-size:.75rem; color:var(--muted); }
+
+/* TEXT SEARCH */
+.search-row { display:flex; gap:8px; margin-bottom:12px; }
+.search-input {
+  flex:1; padding:13px 16px; border:1.5px solid var(--border);
+  border-radius:12px; font-family:'DM Sans',sans-serif; font-size:.9rem;
+  outline:none; background:var(--white); transition:border-color .2s;
+}
+.search-input:focus { border-color:var(--green); }
+.go-btn {
+  background:var(--text); color:white; border:none; border-radius:12px;
+  padding:0 20px; font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem;
+  cursor:pointer; transition:background .2s;
+}
+.go-btn:hover { background:#333; }
+
+/* PILLS */
+.pills { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:28px; }
+.pill {
+  background:var(--white); border:1.5px solid var(--border); color:var(--muted);
+  padding:7px 14px; border-radius:100px; font-size:.78rem; cursor:pointer;
+  transition:all .2s;
+}
+.pill:hover { border-color:var(--green); color:var(--green); }
+
+/* RESULT LIST */
+.result-list { display:flex; flex-direction:column; gap:8px; }
+.ritem {
+  background:var(--white); border:1.5px solid var(--border); border-radius:14px;
+  padding:13px 15px; display:flex; align-items:center; gap:13px;
+  cursor:pointer; transition:all .2s;
+}
+.ritem:hover { border-color:var(--green); }
+.ritem-img { width:44px; height:44px; border-radius:10px; object-fit:contain; background:#f0ede4; flex-shrink:0; }
+.ritem-info { flex:1; min-width:0; }
+.ritem-name { font-weight:500; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ritem-brand { font-size:.72rem; color:var(--muted); margin-top:1px; }
+.ritem-arrow { color:var(--muted); font-size:1.2rem; }
+
+/* PRODUCT DETAIL */
+.back-row { display:flex; align-items:center; gap:7px; color:var(--muted); font-size:.82rem; cursor:pointer; margin-bottom:20px; width:fit-content; }
+.back-row:hover { color:var(--green); }
+.back-row svg { width:16px; height:16px; stroke-width:2; fill:none; stroke:currentColor; }
+
+/* SCORE CARD */
+.score-card {
+  background:var(--green); border-radius:20px; padding:28px 24px;
+  text-align:center; margin-bottom:12px; color:white;
+}
+.prod-brand-sm { font-size:.65rem; letter-spacing:.1em; text-transform:uppercase; opacity:.7; margin-bottom:6px; }
+.prod-name-lg { font-family:'Syne',sans-serif; font-weight:800; font-size:1.2rem; line-height:1.2; margin-bottom:22px; }
+
+/* RING */
+.ring-wrap { position:relative; width:120px; height:120px; margin:0 auto 14px; }
+.ring-svg { width:120px; height:120px; transform:rotate(-90deg); }
+.ring-bg { fill:none; stroke:rgba(255,255,255,.2); stroke-width:9; }
+.ring-fill { fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+.ring-inner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.ring-val { font-family:'Syne',sans-serif; font-size:2.2rem; font-weight:800; line-height:1; }
+.ring-sub { font-size:.65rem; opacity:.6; }
+.score-lbl { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; margin-bottom:3px; }
+.score-sublbl { font-size:.75rem; opacity:.7; }
+.verdict-badge { display:inline-block; background:rgba(255,255,255,.15); padding:5px 16px; border-radius:100px; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; margin-top:10px; }
+
+/* TABS (info / compare) */
+.tabs { display:flex; background:var(--white); border:1.5px solid var(--border); border-radius:12px; padding:3px; margin-bottom:16px; }
+.tab-btn { flex:1; padding:9px; border:none; background:none; border-radius:9px; font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:500; cursor:pointer; color:var(--muted); transition:all .2s; }
+.tab-btn.active { background:var(--green); color:white; font-weight:600; }
+
+/* WHY CARD */
+.card { background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:10px; }
+.card-title { font-family:'Syne',sans-serif; font-size:.9rem; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.why-row { display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border); }
+.why-row:last-child { border-bottom:none; padding-bottom:0; }
+.why-left { display:flex; align-items:center; gap:9px; }
+.why-icon { font-size:1rem; width:24px; text-align:center; }
+.why-name { font-size:.82rem; }
+.why-val { font-size:.72rem; color:var(--muted); margin-top:1px; }
+.why-pts { font-family:'Syne',sans-serif; font-weight:700; font-size:.8rem; padding:2px 8px; border-radius:100px; }
+.why-pts.pos { background:var(--green-light); color:var(--green); }
+.why-pts.neg { background:#fdecea; color:var(--red); }
+.why-pts.neu { background:var(--bg); color:var(--muted); }
+.why-total { display:flex; justify-content:space-between; font-family:'Syne',sans-serif; font-weight:800; font-size:.92rem; padding-top:10px; margin-top:6px; border-top:1.5px solid var(--border); }
+
+/* NUTRIENT GRID */
+.n-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.n-card { background:var(--bg); border-radius:12px; padding:12px 13px; border:1.5px solid var(--border); }
+.n-card.good { border-color:rgba(26,107,58,.25); background:var(--green-light); }
+.n-card.bad { border-color:rgba(214,48,49,.2); background:#fdecea; }
+.n-icon { font-size:1rem; margin-bottom:4px; }
+.n-lbl { font-size:.62rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+.n-val { font-family:'Syne',sans-serif; font-weight:700; font-size:.95rem; }
+.n-verd { font-size:.68rem; margin-top:2px; font-weight:500; }
+.n-card.good .n-verd { color:var(--green); }
+.n-card.bad .n-verd { color:var(--red); }
+.n-card .n-verd { color:var(--muted); }
+
+/* NUTRISCORE */
+.ns-row { display:flex; align-items:center; justify-content:space-between; }
+.ns-badge { font-family:'Syne',sans-serif; font-weight:800; font-size:1.1rem; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; }
+.ns-a{background:#038141}.ns-b{background:#85bb2f}.ns-c{background:#fecb02;color:#333}.ns-d{background:#ee8100}.ns-e{background:#e63e11}.ns-x{background:#aaa;font-size:.75rem}
+
+/* ALTERNATIVES */
+.alt-item { display:flex; align-items:center; gap:11px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+.alt-item:last-child { border-bottom:none; }
+.alt-img { width:38px; height:38px; border-radius:8px; object-fit:contain; background:var(--bg); flex-shrink:0; }
+.alt-info { flex:1; min-width:0; }
+.alt-name { font-size:.82rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.alt-brand { font-size:.7rem; color:var(--muted); }
+.alt-score { font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem; padding:3px 9px; border-radius:100px; background:var(--green-light); color:var(--green); flex-shrink:0; }
+
+/* COMPARE TAB */
+.comp-slots { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.comp-slot { background:var(--bg); border:1.5px dashed var(--border); border-radius:14px; padding:14px; text-align:center; cursor:pointer; min-height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; transition:all .2s; }
+.comp-slot:hover { border-color:var(--green); }
+.comp-slot.filled { border-style:solid; border-color:var(--border); background:var(--white); }
+.comp-slot-lbl { font-size:.62rem; text-transform:uppercase; letter-spacing:.1em; color:var(--green); font-weight:600; }
+.comp-slot-name { font-family:'Syne',sans-serif; font-weight:700; font-size:.8rem; line-height:1.2; }
+.comp-slot-score { font-family:'Syne',sans-serif; font-weight:800; font-size:1.4rem; }
+.comp-slot-clear { font-size:.68rem; color:var(--muted); cursor:pointer; }
+.comp-slot-clear:hover { color:var(--red); }
+.comp-plus { font-size:1.5rem; color:var(--border); }
+.comp-run-btn { width:100%; padding:15px; background:var(--green); color:white; border:none; border-radius:14px; font-family:'Syne',sans-serif; font-weight:800; font-size:.95rem; cursor:pointer; margin-bottom:14px; transition:all .2s; }
+.comp-run-btn:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+.comp-scores { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; margin-bottom:12px; }
+.comp-card { background:var(--white); border:1.5px solid var(--border); border-radius:14px; padding:14px; text-align:center; }
+.comp-card.winner { border-color:var(--green); background:var(--green-light); }
+.comp-card-name { font-size:.72rem; color:var(--muted); margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.comp-card-score { font-family:'Syne',sans-serif; font-weight:800; font-size:1.9rem; line-height:1; }
+.comp-vs { font-family:'Syne',sans-serif; font-weight:800; color:var(--muted); text-align:center; font-size:.85rem; }
+.comp-winner-badge { font-size:.62rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; background:var(--green); color:white; padding:2px 8px; border-radius:100px; display:inline-block; margin-top:4px; }
+.comp-row { display:grid; grid-template-columns:1fr 28px 1fr; gap:6px; margin-bottom:6px; align-items:center; }
+.comp-cell { background:var(--bg); border:1.5px solid var(--border); border-radius:10px; padding:8px 10px; }
+.comp-cell.win { border-color:rgba(26,107,58,.35); background:var(--green-light); }
+.comp-n-lbl { font-size:.6rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+.comp-n-val { font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem; }
+.comp-icon { font-size:.85rem; text-align:center; }
+
+/* MINI MODAL (slot search) */
+.modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; display:none; align-items:flex-end; }
+.modal-bg.active { display:flex; }
+.modal-sheet { background:var(--white); border-radius:22px 22px 0 0; width:100%; padding:22px 20px 40px; animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-title { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; margin-bottom:14px; }
+.modal-row { display:flex; gap:8px; margin-bottom:10px; }
+.modal-results { max-height:220px; overflow-y:auto; }
+
+/* CAMERA */
+.cam-overlay { position:fixed; inset:0; background:#000; z-index:200; display:none; flex-direction:column; align-items:center; justify-content:center; }
+.cam-overlay.active { display:flex; }
+#camVideo { position:relative; width:100%; max-width:480px; height:60vw; max-height:300px; overflow:hidden; border-radius:16px; }
+#camVideo video { width:100%; height:100%; object-fit:cover; }
+#camVideo canvas { display:none !important; }
+.reticle { position:absolute; inset:12%; pointer-events:none; }
+.reticle::before,.reticle::after,.reticle span::before,.reticle span::after {
+  content:''; position:absolute; width:20px; height:20px; border-color:#2dbe6c; border-style:solid;
+}
+.reticle::before { top:0; left:0; border-width:3px 0 0 3px; }
+.reticle::after { top:0; right:0; border-width:3px 3px 0 0; }
+.reticle span::before { bottom:0; left:0; border-width:0 0 3px 3px; }
+.reticle span::after { bottom:0; right:0; border-width:0 3px 3px 0; }
+.scan-line { position:absolute; left:12%; right:12%; height:2px; background:linear-gradient(90deg,transparent,#2dbe6c,transparent); top:50%; animation:scanMove 2s ease-in-out infinite; }
+@keyframes scanMove { 0%,100%{top:15%}50%{top:85%} }
+.cam-hint { color:rgba(255,255,255,.7); font-size:.85rem; margin-top:20px; }
+.cam-close { position:absolute; top:18px; right:18px; background:rgba(255,255,255,.15); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; }
+
+/* LOADING / ERROR */
+.spinner { width:32px; height:32px; border:3px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; margin:0 auto 10px; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.loading-box { text-align:center; padding:40px 0; }
+.loading-box p { color:var(--muted); font-size:.82rem; }
+.error-box { background:#fdecea; border:1.5px solid rgba(214,48,49,.3); border-radius:12px; padding:13px 16px; text-align:center; margin-top:8px; }
+.error-box p { color:var(--red); font-size:.83rem; }
+
+/* CTA */
+.cta { background:var(--green-light); border:1.5px solid rgba(26,107,58,.2); border-radius:var(--radius); padding:18px; text-align:center; margin-bottom:10px; }
+.cta p { color:var(--muted); font-size:.8rem; margin-bottom:12px; line-height:1.5; }
+.cta-btn { background:var(--green); color:white; border:none; padding:12px 24px; border-radius:100px; font-family:'Syne',sans-serif; font-weight:700; font-size:.82rem; cursor:pointer; width:100%; transition:all .2s; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Clean<span>Bite</span></div>
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+</header>
+
+<div class="content">
+
+  <!-- ── STEP 1: SCAN ── -->
+  <div class="screen active" id="s1">
+    <div class="step-label">Step 1 of 2</div>
+    <div class="screen-title">Scan a product</div>
+    <div class="screen-sub">Point your camera at a barcode, or search by name.</div>
+
+    <button class="scan-btn" onclick="openCam()">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><path d="M16 16h5v5M16 21h.01M21 16v.01"/></svg>
+      Scan barcode
+    </button>
+
+    <div class="divider"><span>or type a name</span></div>
+
+    <div class="search-row">
+      <input class="search-input" id="mainInput" placeholder="e.g. protein bar, oat milk…" autocomplete="off">
+      <button class="go-btn" onclick="doSearch()">Go →</button>
+    </div>
+
+    <div class="pills">
+      <span class="pill" onclick="q('protein bar')">🍫 Protein bar</span>
+      <span class="pill" onclick="q('greek yogurt')">🥛 Greek yogurt</span>
+      <span class="pill" onclick="q('oat milk')">🌾 Oat milk</span>
+      <span class="pill" onclick="q('granola')">🥜 Granola</span>
+      <span class="pill" onclick="q('energy drink')">⚡ Energy drink</span>
+    </div>
+
+    <div class="loading-box" id="s1-loading" style="display:none;"><div class="spinner"></div><p>Looking up product…</p></div>
+    <div class="error-box" id="s1-error" style="display:none;"><p id="s1-err-msg"></p></div>
+
+    <div id="s1-list" style="display:none;">
+      <div style="font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-weight:600;" id="s1-list-count"></div>
+      <div class="result-list" id="s1-list-items"></div>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: PRODUCT + TABS ── -->
+  <div class="screen" id="s2">
+    <div class="back-row" onclick="goBack()">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </div>
+
+    <!-- Score card always visible -->
+    <div class="score-card" id="s2-score-card"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-info" onclick="switchTab('info')">📊 Info & Why</button>
+      <button class="tab-btn" id="tab-compare" onclick="switchTab('compare')">⚖️ Compare</button>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div id="panel-info">
+      <div id="s2-why"></div>
+      <div id="s2-nutrients"></div>
+      <div class="card" id="s2-alts">
+        <div class="card-title">✨ Healthier alternatives</div>
+        <div class="loading-box" id="alt-loading" style="padding:12px 0;"><div class="spinner"></div></div>
+        <div id="alt-list" style="display:none;"></div>
+      </div>
+      <div class="cta">
+        <p>Want scores based on your personal goals and diet?</p>
+        <button class="cta-btn" onclick="alert('Sign-up coming soon! 🌱')">Get CleanBite Premium →</button>
+      </div>
+    </div>
+
+    <!-- COMPARE PANEL -->
+    <div id="panel-compare" style="display:none;">
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:12px;">Product A is already set. Add a second product to compare.</div>
+      <div class="comp-slots">
+        <div class="comp-slot filled" id="cslot-a">
+          <div class="comp-slot-lbl">Product A</div>
+          <div class="comp-slot-name" id="cslot-a-name"></div>
+          <div class="comp-slot-score" id="cslot-a-score"></div>
+        </div>
+        <div class="comp-slot" id="cslot-b" onclick="openModal()">
+          <div class="comp-slot-lbl">Product B</div>
+          <div class="comp-plus">＋</div>
+          <div style="font-size:.72rem;color:var(--muted)">Tap to add</div>
+        </div>
+      </div>
+      <button class="comp-run-btn" id="comp-run" disabled onclick="runCompare()">Compare →</button>
+      <div id="comp-result"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CAMERA -->
+<div class="cam-overlay" id="camOverlay">
+  <button class="cam-close" onclick="closeCam()">✕</button>
+  <div id="camVideo">
+    <div class="reticle"><span></span></div>
+    <div class="scan-line"></div>
+  </div>
+  <div class="cam-hint">Point at any EAN / UPC barcode</div>
+  <div style="margin-top:14px;">
+    <button style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;padding:9px 20px;border-radius:100px;font-size:.8rem;cursor:pointer;" onclick="closeCam()">Enter manually</button>
+  </div>
+</div>
+
+<!-- SLOT SEARCH MODAL -->
+<div class="modal-bg" id="slotModal">
+  <div class="modal-sheet">
+    <div class="modal-title">Add Product B</div>
+    <div class="modal-row">
+      <input class="search-input" id="slotInput" placeholder="Search product…" style="flex:1">
+      <button class="go-btn" onclick="doSlotSearch()">Go</button>
+    </div>
+    <div class="loading-box" id="slot-loading" style="display:none;padding:16px 0;"><div class="spinner"></div></div>
+    <div class="modal-results" id="slot-results"></div>
+    <button style="background:none;border:none;color:var(--muted);font-size:.82rem;cursor:pointer;margin-top:12px;width:100%;padding:8px;" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ─ STATE ─ */
+let productA = null, productB = null, _slotResults = [], _lastList = [], _altMap = {};
+
+/* ─ STEP DOTS ─ */
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    const d = document.getElementById('dot'+i);
+    d.className = 'step-dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+}
+
+/* ─ NAVIGATION ─ */
+function goBack() {
+  show('s1'); show('s1-list'); hide('s2');
+  hide('s1-loading'); hide('s1-error');
+  setStep(1);
+}
+
+function goToProduct(p, skipAlt) {
+  productA = p;
+  addHistory(p);
+  hide('s1'); show('s2');
+  setStep(2);
+  const score = computeScore(p);
+  renderScoreCard(p, score);
+  renderWhy(p, score);
+  renderNutrients(p);
+  // reset compare slot A
+  document.getElementById('cslot-a-name').textContent = (p.product_name||'').slice(0,22);
+  const {color} = sStyle(score);
+  document.getElementById('cslot-a-score').textContent = score;
+  document.getElementById('cslot-a-score').style.color = color;
+  // reset slot B
+  productB = null;
+  const sb = document.getElementById('cslot-b');
+  sb.className = 'comp-slot';
+  sb.innerHTML = `<div class="comp-slot-lbl">Product B</div><div class="comp-plus">＋</div><div style="font-size:.72rem;color:var(--muted)">Tap to add</div>`;
+  sb.onclick = openModal;
+  document.getElementById('comp-run').disabled = true;
+  document.getElementById('comp-result').innerHTML = '';
+  switchTab('info');
+  if (!skipAlt) fetchAlts(p, score);
+}
+
+/* ─ TABS ─ */
+function switchTab(t) {
+  document.getElementById('tab-info').className = 'tab-btn' + (t==='info'?' active':'');
+  document.getElementById('tab-compare').className = 'tab-btn' + (t==='compare'?' active':'');
+  document.getElementById('panel-info').style.display = t==='info' ? 'block' : 'none';
+  document.getElementById('panel-compare').style.display = t==='compare' ? 'block' : 'none';
+}
+
+/* ─ SEARCH ─ */
+document.getElementById('mainInput').addEventListener('keydown', e => { if(e.key==='Enter') doSearch(); });
+function q(term) { document.getElementById('mainInput').value = term; doSearch(); }
+
+async function doSearch() {
+  const val = document.getElementById('mainInput').value.trim();
+  if (!val) return;
+  show('s1-loading'); hide('s1-error'); hide('s1-list');
+  try {
+    const isCode = /^\d{8,14}$/.test(val);
+    let list = isCode ? [await fetchBarcode(val)].filter(Boolean) : await search(val);
+    hide('s1-loading');
+    if (!list.length) { showErr('s1-err-msg','No products found. Try a different name.'); show('s1-error'); return; }
+    _lastList = list;
+    if (list.length === 1) { goToProduct(list[0]); return; }
+    renderList(list);
+  } catch(e) {
+    hide('s1-loading');
+    showErr('s1-err-msg','Something went wrong. Try again.');
+    show('s1-error');
+  }
+}
+
+function renderList(list) {
+  const el = document.getElementById('s1-list-items');
+  document.getElementById('s1-list-count').textContent = list.length + ' products found — tap to score';
+  el.innerHTML = '';
+  list.slice(0,10).forEach((p,i) => {
+    const d = document.createElement('div');
+    d.className = 'ritem';
+    const img = p.image_front_small_url || '';
+    d.innerHTML = `
+      ${img ? `<img class="ritem-img" src="${img}" alt="" onerror="this.style.display='none'">` : '<div class="ritem-img"></div>'}
+      <div class="ritem-info"><div class="ritem-name">${x(p.product_name||'Unknown')}</div><div class="ritem-brand">${x(p.brands||'')}</div></div>
+      <span class="ritem-arrow">›</span>`;
+    d.onclick = () => {
+      if (p.code) fetchBarcode(p.code).then(full => goToProduct(full||p));
+      else goToProduct(p);
+    };
+    el.appendChild(d);
+  });
+  show('s1-list');
+}
+
+/* ─ RENDER PRODUCT ─ */
+function renderScoreCard(p, score) {
+  const {color, label} = sStyle(score);
+  const r = 48, circ = 2*Math.PI*r;
+  document.getElementById('s2-score-card').innerHTML = `
+    <div class="prod-brand-sm">${x(p.brands||'Unknown brand')} · per 100g</div>
+    <div class="prod-name-lg">${x(p.product_name||'Unknown Product')}</div>
+    <div class="ring-wrap">
+      <svg class="ring-svg" viewBox="0 0 120 120">
+        <circle class="ring-bg" cx="60" cy="60" r="${r}"/>
+        <circle class="ring-fill" id="mainRing" cx="60" cy="60" r="${r}"
+          stroke="white" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"/>
+      </svg>
+      <div class="ring-inner">
+        <div class="ring-val">${score}</div>
+        <div class="ring-sub">/100</div>
+      </div>
+    </div>
+    <div class="score-lbl">${label}</div>
+    <div class="score-sublbl">CleanBite Score</div>
+    <div class="verdict-badge">${label} choice</div>`;
+  requestAnimationFrame(() => {
+    const ring = document.getElementById('mainRing');
+    if (ring) ring.style.strokeDashoffset = circ - (score/100)*circ;
+  });
+}
+
+function renderWhy(p, score) {
+  const bd = breakdown(p);
+  const rows = bd.factors.map(f => `
+    <div class="why-row">
+      <div class="why-left">
+        <span class="why-icon">${f.icon}</span>
+        <div><div class="why-name">${f.name}</div><div class="why-val">${f.detail}</div></div>
+      </div>
+      <span class="why-pts ${f.pts>0?'pos':f.pts<0?'neg':'neu'}">${f.pts>0?'+':''}${f.pts}</span>
+    </div>`).join('');
+  document.getElementById('s2-why').innerHTML = `
+    <div class="card">
+      <div class="card-title">🧮 Why this score?</div>
+      ${rows}
+      <div class="why-total"><span>Final Score</span><span>${score} / 100</span></div>
+    </div>`;
+}
+
+function renderNutrients(p) {
+  const n = p.nutriments || {};
+  const ng = (p.nutrition_grades||'').toUpperCase();
+  const nsClass = ['A','B','C','D','E'].includes(ng) ? 'ns-'+ng.toLowerCase() : 'ns-x';
+  const defs = [
+    {name:'Protein',  icon:'💪', key:'proteins_100g',      unit:'g',    good:v=>v>=10, bad:v=>v<3},
+    {name:'Sugar',    icon:'🍬', key:'sugars_100g',         unit:'g',    good:v=>v<=5,  bad:v=>v>20},
+    {name:'Sat. Fat', icon:'🧈', key:'saturated-fat_100g', unit:'g',    good:v=>v<=1.5,bad:v=>v>5},
+    {name:'Fiber',    icon:'🌾', key:'fiber_100g',          unit:'g',    good:v=>v>=3,  bad:v=>v<0.5},
+    {name:'Sodium',   icon:'🧂', key:'sodium_100g',         unit:'mg',   good:v=>v<120, bad:v=>v>500, transform:v=>+(v*1000).toFixed(0)},
+    {name:'Calories', icon:'🔥', key:'energy-kcal_100g',   unit:'kcal', good:v=>v<200, bad:v=>v>500},
+  ];
+  const cards = defs.map(d => {
+    let val = n[d.key]; if (val == null) return '';
+    if (d.transform) val = d.transform(val);
+    const disp = typeof val==='number'&&val%1!==0 ? val.toFixed(1) : val;
+    let cls='', verd='Moderate';
+    if (d.good(val)) { cls='good'; verd=(['Sugar','Sat. Fat','Sodium'].includes(d.name))?'Low ✓':'Good ✓'; }
+    else if (d.bad(val)) { cls='bad'; verd=(['Protein','Fiber'].includes(d.name))?'Low ⚠':'High ⚠'; }
+    return `<div class="n-card ${cls}"><div class="n-icon">${d.icon}</div><div class="n-lbl">${d.name}</div><div class="n-val">${disp}${d.unit}</div><div class="n-verd">${verd}</div></div>`;
+  }).join('');
+
+  document.getElementById('s2-nutrients').innerHTML = `
+    ${ng ? `<div class="card" style="margin-bottom:10px;">
+      <div class="ns-row">
+        <div><div style="font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:600;margin-bottom:2px;">Official Nutri-Score</div>
+        <div style="font-size:.78rem;color:var(--muted)">European nutritional rating</div></div>
+        <div class="ns-badge ${nsClass}">${ng}</div>
+      </div></div>` : ''}
+    <div class="card" style="margin-bottom:10px;">
+      <div class="card-title">📊 Nutrients</div>
+      <div class="n-grid">${cards}</div>
+    </div>`;
+}
+
+async function fetchAlts(p, score) {
+  show('alt-loading'); hide('alt-list');
+  try {
+    const term = (p.product_name||'').split(' ').slice(0,2).join(' ');
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&json=1&page_size=8&fields=product_name,brands,nutriments,nutrition_grades,image_front_small_url,code`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const alts = (data.products||[]).filter(a => a.product_name && a.code !== p.code).slice(0,3);
+    hide('alt-loading');
+    _altMap = {};
+    alts.forEach(a => _altMap[a.code] = a);
+    if (!alts.length) { document.getElementById('alt-list').innerHTML='<p style="color:var(--muted);font-size:.8rem;">No alternatives found.</p>'; }
+    else {
+      document.getElementById('alt-list').innerHTML = alts.map(a => {
+        const s = computeScore(a);
+        const {color} = sStyle(s);
+        const img = a.image_front_small_url||'';
+        return `<div class="alt-item" onclick="goToProduct(_altMap['${a.code}'])">
+          ${img?`<img class="alt-img" src="${img}" alt="" onerror="this.style.display='none'">` : '<div class="alt-img"></div>'}
+          <div class="alt-info"><div class="alt-name">${x(a.product_name||'')}</div><div class="alt-brand">${x(a.brands||'')}</div></div>
+          <div class="alt-score" style="color:${color}">${s}</div>
+        </div>`;
+      }).join('');
+    }
+    show('alt-list');
+  } catch(e) { hide('alt-loading'); }
+}
+
+/* ─ COMPARE ─ */
+function openModal() {
+  document.getElementById('slotInput').value = '';
+  document.getElementById('slot-results').innerHTML = '';
+  hide('slot-loading');
+  document.getElementById('slotModal').classList.add('active');
+  setTimeout(() => document.getElementById('slotInput').focus(), 100);
+}
+function closeModal() { document.getElementById('slotModal').classList.remove('active'); }
+document.getElementById('slotInput').addEventListener('keydown', e => { if(e.key==='Enter') doSlotSearch(); });
+
+async function doSlotSearch() {
+  const val = document.getElementById('slotInput').value.trim();
+  if (!val) return;
+  show('slot-loading'); document.getElementById('slot-results').innerHTML = '';
+  try {
+    const isCode = /^\d{8,14}$/.test(val);
+    _slotResults = isCode ? [await fetchBarcode(val)].filter(Boolean) : (await search(val)).slice(0,6);
+    hide('slot-loading');
+    if (!_slotResults.length) { document.getElementById('slot-results').innerHTML='<p style="color:var(--red);font-size:.82rem;text-align:center;padding:10px;">Nothing found.</p>'; return; }
+    document.getElementById('slot-results').innerHTML = _slotResults.map((p,i) => `
+      <div class="ritem" style="margin-bottom:6px;" onclick="selectB(${i})">
+        ${p.image_front_small_url?`<img class="ritem-img" src="${p.image_front_small_url}" alt="" onerror="this.style.display='none'">` : '<div class="ritem-img"></div>'}
+        <div class="ritem-info"><div class="ritem-name">${x(p.product_name||'Unknown')}</div><div class="ritem-brand">${x(p.brands||'')}</div></div>
+        <span class="ritem-arrow">›</span>
+      </div>`).join('');
+  } catch(e) { hide('slot-loading'); }
+}
+
+function selectB(i) {
+  productB = _slotResults[i];
+  const s = computeScore(productB);
+  const {color} = sStyle(s);
+  const sb = document.getElementById('cslot-b');
+  sb.className = 'comp-slot filled';
+  sb.onclick = null;
+  sb.innerHTML = `
+    <div class="comp-slot-lbl">Product B</div>
+    <div class="comp-slot-name">${x((productB.product_name||'').slice(0,22))}</div>
+    <div class="comp-slot-score" style="color:${color}">${s}</div>
+    <div class="comp-slot-clear" onclick="clearB(event)">✕ Remove</div>`;
+  document.getElementById('comp-run').disabled = false;
+  closeModal();
+}
+
+function clearB(e) {
+  e.stopPropagation();
+  productB = null;
+  const sb = document.getElementById('cslot-b');
+  sb.className = 'comp-slot';
+  sb.onclick = openModal;
+  sb.innerHTML = `<div class="comp-slot-lbl">Product B</div><div class="comp-plus">＋</div><div style="font-size:.72rem;color:var(--muted)">Tap to add</div>`;
+  document.getElementById('comp-run').disabled = true;
+  document.getElementById('comp-result').innerHTML = '';
+}
+
+function runCompare() {
+  if (!productA || !productB) return;
+  const sa = computeScore(productA), sb = computeScore(productB);
+  const {color:ca} = sStyle(sa), {color:cb} = sStyle(sb);
+  const winner = sa > sb ? 'a' : sb > sa ? 'b' : 'tie';
+
+  const nts = [
+    {name:'Protein', icon:'💪', key:'proteins_100g',       unit:'g',    hb:true},
+    {name:'Sugar',   icon:'🍬', key:'sugars_100g',          unit:'g',    hb:false},
+    {name:'Calories',icon:'🔥', key:'energy-kcal_100g',    unit:'kcal', hb:false},
+    {name:'Sat. Fat',icon:'🧈', key:'saturated-fat_100g',  unit:'g',    hb:false},
+    {name:'Fiber',   icon:'🌾', key:'fiber_100g',           unit:'g',    hb:true},
+    {name:'Sodium',  icon:'🧂', key:'sodium_100g',          unit:'g',    hb:false},
+  ];
+
+  const rows = nts.map(nt => {
+    const va = (productA.nutriments||{})[nt.key], vb = (productB.nutriments||{})[nt.key];
+    if (va==null && vb==null) return '';
+    const da = va!=null ? (typeof va==='number'&&va%1!==0?va.toFixed(1):va)+nt.unit : '—';
+    const db = vb!=null ? (typeof vb==='number'&&vb%1!==0?vb.toFixed(1):vb)+nt.unit : '—';
+    const winA = va!=null&&vb!=null&&(nt.hb ? va>vb : va<vb);
+    const winB = va!=null&&vb!=null&&(nt.hb ? vb>va : vb<va);
+    return `<div class="comp-row">
+      <div class="comp-cell ${winA?'win':''}"><div class="comp-n-lbl">${nt.name}</div><div class="comp-n-val">${da}</div></div>
+      <div class="comp-icon">${nt.icon}</div>
+      <div class="comp-cell ${winB?'win':''}"><div class="comp-n-lbl">${nt.name}</div><div class="comp-n-val">${db}</div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('comp-result').innerHTML = `
+    <div class="comp-scores">
+      <div class="comp-card ${winner==='a'?'winner':''}">
+        <div class="comp-card-name">${x((productA.product_name||'').slice(0,18))}</div>
+        <div class="comp-card-score" style="color:${ca}">${sa}</div>
+        ${winner==='a'?'<div class="comp-winner-badge">Winner 🏆</div>':''}
+      </div>
+      <div class="comp-vs">VS</div>
+      <div class="comp-card ${winner==='b'?'winner':''}">
+        <div class="comp-card-name">${x((productB.product_name||'').slice(0,18))}</div>
+        <div class="comp-card-score" style="color:${cb}">${sb}</div>
+        ${winner==='b'?'<div class="comp-winner-badge">Winner 🏆</div>':''}
+      </div>
+    </div>
+    <div style="font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:600;">Nutrient by nutrient</div>
+    ${rows}`;
+}
+
+/* ─ CAMERA ─ */
+function openCam() {
+  document.getElementById('camOverlay').classList.add('active');
+  if (typeof Quagga === 'undefined') { closeCam(); return; }
+  Quagga.init({
+    inputStream: { name:'Live', type:'LiveStream', target:document.getElementById('camVideo'), constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}} },
+    decoder: { readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader'] },
+    locate:true, numOfWorkers:2, frequency:10
+  }, err => { if(err) closeCam(); else Quagga.start(); });
+  Quagga.onDetected(onCode);
+}
+
+function onCode(r) {
+  const code = r.codeResult.code;
+  if (navigator.vibrate) navigator.vibrate(80);
+  closeCam();
+  document.getElementById('mainInput').value = code;
+  doSearch();
+}
+
+function closeCam() {
+  document.getElementById('camOverlay').classList.remove('active');
+  if (typeof Quagga !== 'undefined') { try { Quagga.stop(); } catch(e){} try { Quagga.offDetected(onCode); } catch(e){} }
+}
+
+/* ─ API ─ */
+async function fetchBarcode(code) {
+  const r = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+  const d = await r.json();
+  return d.status===1 ? d.product : null;
+}
+async function search(q) {
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&json=1&page_size=12&fields=product_name,brands,nutriments,nutrition_grades,image_front_small_url,code`;
+  const r = await fetch(url);
+  const d = await r.json();
+  return (d.products||[]).filter(p => p.product_name&&p.product_name.trim()!=='');
+}
+
+/* ─ SCORE ─ */
+function computeScore(p) { return breakdown(p).total; }
+function breakdown(p) {
+  const n = p.nutriments||{}, factors=[];
+  let total = 50;
+  factors.push({icon:'⚖️',name:'Base',detail:'Starting point',pts:50});
+  const add=(icon,name,detail,pts)=>{factors.push({icon,name,detail,pts});total+=pts;};
+  const prot=n['proteins_100g'];
+  if(prot!=null){
+    if(prot>=20) add('💪','Protein',`${prot.toFixed(1)}g — excellent`,20);
+    else if(prot>=10) add('💪','Protein',`${prot.toFixed(1)}g — good`,12);
+    else if(prot>=5)  add('💪','Protein',`${prot.toFixed(1)}g — moderate`,6);
+    else add('💪','Protein',`${prot.toFixed(1)}g — low`,-5);
+  }
+  const fib=n['fiber_100g'];
+  if(fib!=null){
+    if(fib>=6) add('🌾','Fiber',`${fib.toFixed(1)}g — excellent`,15);
+    else if(fib>=3) add('🌾','Fiber',`${fib.toFixed(1)}g — good`,8);
+    else if(fib>=1) add('🌾','Fiber',`${fib.toFixed(1)}g — some`,3);
+    else add('🌾','Fiber',`${fib.toFixed(1)}g — very low`,-3);
+  }
+  const sug=n['sugars_100g'];
+  if(sug!=null){
+    if(sug>25) add('🍬','Sugar',`${sug.toFixed(1)}g — very high`,-22);
+    else if(sug>15) add('🍬','Sugar',`${sug.toFixed(1)}g — high`,-14);
+    else if(sug>8)  add('🍬','Sugar',`${sug.toFixed(1)}g — moderate`,-7);
+    else if(sug<=3) add('🍬','Sugar',`${sug.toFixed(1)}g — very low`,8);
+    else add('🍬','Sugar',`${sug.toFixed(1)}g — ok`,0);
+  }
+  const sf=n['saturated-fat_100g'];
+  if(sf!=null){
+    if(sf>10) add('🧈','Sat. Fat',`${sf.toFixed(1)}g — very high`,-18);
+    else if(sf>5) add('🧈','Sat. Fat',`${sf.toFixed(1)}g — high`,-10);
+    else if(sf<=1.5) add('🧈','Sat. Fat',`${sf.toFixed(1)}g — low`,8);
+    else add('🧈','Sat. Fat',`${sf.toFixed(1)}g — moderate`,-2);
+  }
+  const sod=n['sodium_100g']?n['sodium_100g']*1000:null;
+  if(sod!=null){
+    if(sod>600) add('🧂','Sodium',`${sod.toFixed(0)}mg — very high`,-15);
+    else if(sod>300) add('🧂','Sodium',`${sod.toFixed(0)}mg — high`,-8);
+    else if(sod<100) add('🧂','Sodium',`${sod.toFixed(0)}mg — low`,5);
+    else add('🧂','Sodium',`${sod.toFixed(0)}mg — ok`,0);
+  }
+  const kcal=n['energy-kcal_100g']||n['energy_kcal_100g'];
+  if(kcal!=null){
+    if(kcal>600) add('🔥','Calories',`${Math.round(kcal)} kcal — very dense`,-10);
+    else if(kcal>350) add('🔥','Calories',`${Math.round(kcal)} kcal — dense`,-4);
+    else if(kcal<150) add('🔥','Calories',`${Math.round(kcal)} kcal — light`,5);
+    else add('🔥','Calories',`${Math.round(kcal)} kcal — ok`,0);
+  }
+  const ng=(p.nutrition_grades||'').toLowerCase();
+  if(ng==='a') add('🏅','Nutri-Score A','Official rating',10);
+  else if(ng==='b') add('🏅','Nutri-Score B','Official rating',5);
+  else if(ng==='d') add('🏅','Nutri-Score D','Official rating',-5);
+  else if(ng==='e') add('🏅','Nutri-Score E','Official rating',-10);
+  return {factors, total:Math.max(0,Math.min(100,Math.round(total)))};
+}
+
+/* ─ UTILS ─ */
+function sStyle(s) {
+  const color = s>=60?'var(--green)':s>=35?'var(--amber)':'var(--red)';
+  const label = s>=70?'Excellent':s>=55?'Good':s>=35?'Fair':'Poor';
+  return {color,label};
+}
+function x(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function show(id){ document.getElementById(id).style.display='block'; }
+function hide(id){ document.getElementById(id).style.display='none'; }
+
+/* ─ HISTORY (in-memory only for this demo) ─ */
+function addHistory(p){}
+</script>
+</body>
+</html>
