@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CleanBite</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
 :root {
   --bg: #f7f5f0;
@@ -217,22 +217,16 @@ header {
 .modal-results { max-height:220px; overflow-y:auto; }
 
 /* CAMERA */
-.cam-overlay { position:fixed; inset:0; background:#000; z-index:200; display:none; flex-direction:column; align-items:center; justify-content:center; }
+.cam-overlay { position:fixed; inset:0; background:#000; z-index:200; display:none; flex-direction:column; align-items:center; justify-content:center; padding:0 16px; }
 .cam-overlay.active { display:flex; }
-#camVideo { position:relative; width:100%; max-width:480px; height:60vw; max-height:300px; overflow:hidden; border-radius:16px; }
-#camVideo video { width:100%; height:100%; object-fit:cover; }
-#camVideo canvas { display:none !important; }
-.reticle { position:absolute; inset:12%; pointer-events:none; }
-.reticle::before,.reticle::after,.reticle span::before,.reticle span::after {
-  content:''; position:absolute; width:20px; height:20px; border-color:#2dbe6c; border-style:solid;
-}
-.reticle::before { top:0; left:0; border-width:3px 0 0 3px; }
-.reticle::after { top:0; right:0; border-width:3px 3px 0 0; }
-.reticle span::before { bottom:0; left:0; border-width:0 0 3px 3px; }
-.reticle span::after { bottom:0; right:0; border-width:0 3px 3px 0; }
-.scan-line { position:absolute; left:12%; right:12%; height:2px; background:linear-gradient(90deg,transparent,#2dbe6c,transparent); top:50%; animation:scanMove 2s ease-in-out infinite; }
-@keyframes scanMove { 0%,100%{top:15%}50%{top:85%} }
-.cam-hint { color:rgba(255,255,255,.7); font-size:.85rem; margin-top:20px; }
+#qr-reader { width:100%; max-width:360px; border-radius:16px; overflow:hidden; }
+/* Override html5-qrcode default styles */
+#qr-reader > * { border:none !important; }
+#qr-reader__scan_region { border-radius:14px; overflow:hidden; }
+#qr-reader__scan_region video { border-radius:14px; }
+#qr-reader__scan_region img { display:none !important; }
+#qr-reader__dashboard { display:none !important; }
+.cam-hint { color:rgba(255,255,255,.7); font-size:.85rem; margin-top:20px; text-align:center; }
 .cam-close { position:absolute; top:18px; right:18px; background:rgba(255,255,255,.15); border:none; color:white; width:40px; height:40px; border-radius:50%; cursor:pointer; font-size:1.2rem; display:flex; align-items:center; justify-content:center; }
 
 /* LOADING / ERROR */
@@ -353,11 +347,8 @@ header {
 <!-- CAMERA -->
 <div class="cam-overlay" id="camOverlay">
   <button class="cam-close" onclick="closeCam()">✕</button>
-  <div id="camVideo">
-    <div class="reticle"><span></span></div>
-    <div class="scan-line"></div>
-  </div>
-  <div class="cam-hint">Point at any EAN / UPC barcode</div>
+  <div id="qr-reader"></div>
+  <div class="cam-hint" id="cam-hint">Point at any EAN / UPC barcode</div>
   <div style="margin-top:14px;">
     <button style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:white;padding:9px 20px;border-radius:100px;font-size:.8rem;cursor:pointer;" onclick="closeCam()">Enter manually</button>
   </div>
@@ -686,28 +677,47 @@ function runCompare() {
 }
 
 /* ─ CAMERA ─ */
-function openCam() {
-  document.getElementById('camOverlay').classList.add('active');
-  if (typeof Quagga === 'undefined') { closeCam(); return; }
-  Quagga.init({
-    inputStream: { name:'Live', type:'LiveStream', target:document.getElementById('camVideo'), constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}} },
-    decoder: { readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader'] },
-    locate:true, numOfWorkers:2, frequency:10
-  }, err => { if(err) closeCam(); else Quagga.start(); });
-  Quagga.onDetected(onCode);
-}
+let html5QrCode = null;
 
-function onCode(r) {
-  const code = r.codeResult.code;
-  if (navigator.vibrate) navigator.vibrate(80);
-  closeCam();
-  document.getElementById('mainInput').value = code;
-  doSearch();
+function openCam() {
+  if (typeof Html5Qrcode === 'undefined') {
+    alert('Scanner failed to load. Please enter the barcode manually.');
+    return;
+  }
+  document.getElementById('camOverlay').classList.add('active');
+  document.getElementById('cam-hint').textContent = 'Starting camera…';
+
+  html5QrCode = new Html5Qrcode('qr-reader', { verbose: false });
+
+  html5QrCode.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 150 }, aspectRatio: 1.7778 },
+    (decodedText) => {
+      if (navigator.vibrate) navigator.vibrate(80);
+      document.getElementById('cam-hint').textContent = '✓ Got it!';
+      setTimeout(() => {
+        closeCam();
+        document.getElementById('mainInput').value = decodedText;
+        doSearch();
+      }, 400);
+    },
+    () => {}
+  ).then(() => {
+    document.getElementById('cam-hint').textContent = 'Point at any EAN / UPC barcode';
+  }).catch((err) => {
+    closeCam();
+    alert('Could not access camera. Try entering the barcode manually.\n\n' + err);
+  });
 }
 
 function closeCam() {
   document.getElementById('camOverlay').classList.remove('active');
-  if (typeof Quagga !== 'undefined') { try { Quagga.stop(); } catch(e){} try { Quagga.offDetected(onCode); } catch(e){} }
+  if (html5QrCode) {
+    html5QrCode.stop().catch(() => {}).finally(() => {
+      html5QrCode.clear();
+      html5QrCode = null;
+    });
+  }
 }
 
 /* ─ API ─ */
